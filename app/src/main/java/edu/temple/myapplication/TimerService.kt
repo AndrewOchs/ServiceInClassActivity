@@ -20,34 +20,28 @@ class TimerService : Service() {
 
     inner class TimerBinder : Binder() {
 
-        // Check if Timer is already running
         val isRunning: Boolean
             get() = this@TimerService.isRunning
 
-        // Check if Timer is paused
         val paused: Boolean
             get() = this@TimerService.paused
 
-        // Start a new timer
         fun start(startValue: Int){
             if (!isRunning) {
                 this@TimerService.start(startValue)
             }
         }
 
-        // Receive updates from Service
         fun setHandler(handler: Handler) {
             timerHandler = handler
         }
 
-        // Stop a currently running timer
         fun stop() {
             if (::t.isInitialized && t.isAlive) {
                 t.interrupt()
             }
         }
 
-        // Pause a running timer
         fun pause() {
             if(isRunning) {
                 this@TimerService.pause()

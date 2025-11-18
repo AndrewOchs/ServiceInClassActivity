@@ -81,11 +81,11 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.action_start_pause -> {
                 if(isConnected) {
-                    if (TimeBinder.isRunning && !TimeBinder.paused) { // Running -> Pause
+                    if (TimeBinder.isRunning && !TimeBinder.paused) {
                         item.title = "Start"
                         item.setIcon(R.drawable.ic_play)
                         TimeBinder.pause()
-                    } else { // Paused or Stopped -> Start/Resume
+                    } else {
                         item.title = "Pause"
                         item.setIcon(R.drawable.ic_pause)
                         if (!TimeBinder.isRunning) {
