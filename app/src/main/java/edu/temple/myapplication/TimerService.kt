@@ -16,7 +16,7 @@ class TimerService : Service() {
 
     lateinit var t: TimerThread
 
-    private var paused = false
+    var paused = false
 
     inner class TimerBinder : Binder() {
 
@@ -30,14 +30,8 @@ class TimerService : Service() {
 
         // Start a new timer
         fun start(startValue: Int){
-
-            if (!paused) {
-                if (!isRunning) {
-                    if (::t.isInitialized) t.interrupt()
-                    this@TimerService.start(startValue)
-                }
-            } else {
-                pause()
+            if (!isRunning) {
+                this@TimerService.start(startValue)
             }
         }
 
@@ -48,14 +42,16 @@ class TimerService : Service() {
 
         // Stop a currently running timer
         fun stop() {
-            if (::t.isInitialized || isRunning) {
+            if (::t.isInitialized && t.isAlive) {
                 t.interrupt()
             }
         }
 
         // Pause a running timer
         fun pause() {
-            this@TimerService.pause()
+            if(isRunning) {
+                this@TimerService.pause()
+            }
         }
 
     }
@@ -70,35 +66,35 @@ class TimerService : Service() {
         return TimerBinder()
     }
 
-    fun start(startValue: Int) {
+    private fun start(startValue: Int) {
         t = TimerThread(startValue)
         t.start()
     }
 
-    fun pause () {
-        if (::t.isInitialized) {
-            paused = !paused
-            isRunning = !paused
-        }
+    private fun pause () {
+        paused = !paused
     }
 
     inner class TimerThread(private val startValue: Int) : Thread() {
 
         override fun run() {
-            isRunning = true
             try {
+                isRunning = true
+                paused = false
                 for (i in startValue downTo 1)  {
                     Log.d("Countdown", i.toString())
 
                     timerHandler?.sendEmptyMessage(i)
 
-                    while (paused);
+                    while (paused) {
+                        sleep(50)
+                    }
                     sleep(1000)
 
                 }
-                isRunning = false
             } catch (e: InterruptedException) {
                 Log.d("Timer interrupted", e.toString())
+            } finally {
                 isRunning = false
                 paused = false
             }
@@ -107,7 +103,7 @@ class TimerService : Service() {
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
-        if (::t.isInitialized) {
+        if (::t.isInitialized && t.isAlive) {
             t.interrupt()
         }
 

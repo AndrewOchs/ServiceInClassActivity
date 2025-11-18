@@ -8,6 +8,8 @@ import android.os.Bundle
 import android.os.IBinder
 import android.os.Looper
 import android.os.Message
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Button
 import android.widget.TextView
 import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.util.concurrent.Service
@@ -22,6 +24,7 @@ class MainActivity : AppCompatActivity() {
 //create handler and show countdown in activity step 2
     lateinit var TimeBinder: TimerService.TimerBinder
     var isConnected = false
+    private var menu: Menu? = null
 
 //    val timerHandler = Handler(Looper.getMainLooper()){
 //
@@ -65,35 +68,47 @@ class MainActivity : AppCompatActivity() {
         //bind
         var intent = Intent(this, TimerService::class.java)
         bindService(intent,serviceConnection,BIND_AUTO_CREATE)
+    }
 
-        //start, pause, and unpause
-        findViewById<Button>(R.id.startButton).setOnClickListener {
-            if(!TimeBinder.isRunning && isConnected){
-                findViewById<Button>(R.id.startButton).text = "pause"
-                TimeBinder.start(1000)
-            }else if(TimeBinder.paused && isConnected){
-                findViewById<Button>(R.id.startButton).text = "pause"
-                TimeBinder.pause()
-            }else if(!TimeBinder.paused && isConnected){
-                findViewById<Button>(R.id.startButton).text = "unpause"
-                TimeBinder.pause()
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        this.menu = menu
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val text = findViewById<TextView>(R.id.textView)
+        when (item.itemId) {
+            R.id.action_start_pause -> {
+                if(isConnected) {
+                    if (TimeBinder.isRunning && !TimeBinder.paused) { // Running -> Pause
+                        item.title = "Start"
+                        item.setIcon(R.drawable.ic_play)
+                        TimeBinder.pause()
+                    } else { // Paused or Stopped -> Start/Resume
+                        item.title = "Pause"
+                        item.setIcon(R.drawable.ic_pause)
+                        if (!TimeBinder.isRunning) {
+                            TimeBinder.start(1000)
+                        } else {
+                            TimeBinder.pause()
+                        }
+                    }
+                }
+                return true
             }
-            //if not started then start
-                //change text to pause
-            //else if paused
-                //change text to unpause
-            //else if unpaused
-                //change text to pause
-
-
+            R.id.action_stop -> {
+                if(isConnected) {
+                    text.text = "0"
+                    TimeBinder.stop()
+                    val startPauseItem = menu?.findItem(R.id.action_start_pause)
+                    startPauseItem?.title = "Start"
+                    startPauseItem?.setIcon(R.drawable.ic_play)
+                }
+                return true
+            }
         }
-        //stop
-        findViewById<Button>(R.id.stopButton).setOnClickListener {
-            //change start text to start
-            findViewById<Button>(R.id.startButton).text = "start"
-            text.text = "0"
-            TimeBinder.stop()
-        }
+        return super.onOptionsItemSelected(item)
     }
 
     override fun onDestroy() {
